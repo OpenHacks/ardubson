@@ -9,7 +9,7 @@
 #define PARSE_ERROR_DATA 0
 #define PARSE_ERROR_TIMEOUT 1
 #define PARSE_ERROR_BUFFER_OVERFLOW 2
-#define PARSE_ERROR_MESSAGE_SIZE 3
+#define PARSE_ERROR_END_OF_DOC 3
 
 typedef void (*errorCallbackPtr)(int error_code);
 typedef void (*messageCallbackPtr)(BSONObject * bson_object);
@@ -33,6 +33,8 @@ class BSONStreamParser
         void setMessageHandler(messageCallbackPtr func);
         void parseError(void);
         void timeoutError(void);
+        uint16_t getBufferIndex();
+        uint8_t getBufferByte(uint16_t index);
 };
 
 #endif

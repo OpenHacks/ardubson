@@ -8,11 +8,10 @@ BSONStreamParser::BSONStreamParser(void) {
 void BSONStreamParser::update() {
     unsigned long diff = millis() - rx_time_stamp;
     if ((buffer_index > 0) && (diff > COMMAND_TIMEOUT)) {
-        //Serial.println("Command timeout!");
-        buffer_index = 0;
         if (parseErrorPointer) {
             parseErrorPointer(PARSE_ERROR_TIMEOUT);
         }
+        buffer_index = 0;
     }
 }
 
@@ -37,12 +36,13 @@ void BSONStreamParser::analizeIncomingChars(char c) {
             uint32_t size = *(uint32_t *) frame;
 
             if (size == buffer_index) {
-                buffer_index = 0;
-
-                if (size > BSON_DOC_SIZE) {
-                    parseErrorPointer(PARSE_ERROR_MESSAGE_SIZE);
+                if (frame[buffer_index - 1] != 0) {
+                    parseErrorPointer(PARSE_ERROR_END_OF_DOC);
+                    buffer_index = 0;
                     return;
                 }
+
+                buffer_index = 0;
 
                 if (messagePointer) {
                     BSONObject bo = BSONObject(frame);
@@ -52,11 +52,18 @@ void BSONStreamParser::analizeIncomingChars(char c) {
             }
         }
     } else {
-        //Serial.println("Overflow!");
-        buffer_index = 0;
         if (parseErrorPointer) {
             parseErrorPointer(PARSE_ERROR_BUFFER_OVERFLOW);
+            buffer_index = 0;
             return;
         }
     }
+}
+
+uint16_t BSONStreamParser::getBufferIndex() {
+    return buffer_index;
+}
+
+uint8_t BSONStreamParser::getBufferByte(uint16_t index) {
+    return frame[index];
 }
